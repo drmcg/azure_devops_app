@@ -1,0 +1,20 @@
+{
+  "name": "Flutter Android Development",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Dart-Code.flutter",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
+  },
+  "forwardPorts": [5000],
+  "remoteUser": "vscode",
+  "postCreateCommand": "flutter doctor && flutter pub get",
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ]
+}
