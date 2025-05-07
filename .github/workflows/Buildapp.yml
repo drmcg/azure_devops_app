@@ -25,13 +25,27 @@ jobs:
         channel: stable
         flutter-version: 3.29.3
 
+    # Install Java
+    - name: Install Java
+      run: sudo apt-get install openjdk-11-jdk
+
+    # Accept Android SDK Licenses
+    - name: Accept Android SDK Licenses
+      run: yes | sdkmanager --licenses
+
+    # Clean and Refresh Gradle Cache
+    - name: Clean and Refresh Gradle Cache
+      run: |
+        rm -rf ~/.gradle/caches/
+        flutter pub get
+
     # Install Flutter dependencies
     - name: Install Dependencies
       run: flutter pub get
 
-    # Build the APK
+    # Build the APK with verbose logging
     - name: Build APK
-      run: flutter build apk --release
+      run: flutter build apk --release -v
 
     # Archive the APK as an artifact
     - name: Upload APK
