@@ -38,6 +38,6 @@ USER $USERNAME
 WORKDIR /workspace
 
 # Pre-cache Flutter dependencies
-RUN flutter precache && \
-    flutter config --enable-web && \
-    flutter doctor
+#RUN flutter precache && \
+  # flutter config --enable-web && \
+   # flutter doctor
