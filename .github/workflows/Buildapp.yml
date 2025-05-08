@@ -49,6 +49,11 @@ jobs:
 
       - name: 🏗️ Build APKs
         run: flutter build apk --release --split-per-abi
+        env:
+           GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m"
+
+
+      
 
       - name: 📦 Prepare artifacts
         run: |
