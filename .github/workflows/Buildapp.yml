@@ -1,51 +1,66 @@
-name: Build Flutter Android APK
+name: 🛠 Android CI / Build & Release APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+    tags:    [ 'v*.*.*' ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
+
+permissions:
+  contents: write   # allow creating/updating Releases & uploading assets
+  actions:  read    # allow pulling marketplace actions
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build APK
+  build_and_release:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the repository
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: 📂 Checkout code
+        uses: actions/checkout@v3
 
-    # Set up Flutter
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: stable
-        flutter-version: 3.29.3
+      - name: 🚀 Cache pub deps
+        uses: actions/cache@v3
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: ${{ runner.os }}-pub-
 
-    # Install Java
-    - name: Install Java
-      run: sudo apt-get install openjdk-11-jdk
+      - name: ☕️ Setup Java (Temurin 17)
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
 
-    # Clean and Refresh Gradle Cache
-    - name: Clean and Refresh Gradle Cache
-      run: |
-        rm -rf ~/.gradle/caches/
-        flutter pub get
+      - name: 🦋 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
 
-    # Install Flutter dependencies
-    - name: Install Dependencies
-      run: flutter pub get
+      - name: 📥 Get dependencies
+        run: flutter pub get
 
-    # Build the APK with verbose logging
-    - name: Build APK
-      run: flutter build apk --release -v
+      - name: ✅ Run tests
+        run: flutter test --coverage
 
-    # Archive the APK as an artifact
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: flutter-android-apk
-        path: build/app/outputs/flutter-apk/app-release.apk
+      - name: 🏗️ Build APKs
+        run: flutter build apk --release --split-per-abi
+
+      - name: 📦 Prepare artifacts
+        run: |
+          mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/*.apk artifacts/
+
+      # ─────────────── ONLY ON TAGS ───────────────
+      - name: 🏷️ Create or update Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: ncipollo/release-action@v1.16.0
+        with:
+          tag:       ${{ github.ref_name }}
+          name:      Release ${{ github.ref_name }}
+          artifacts: artifacts/*.apk
+          token:     ${{ secrets.GITHUB_TOKEN }}
